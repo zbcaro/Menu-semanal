@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menú de la semana</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  :root{
+    --paper:#FFF6E9;
+    --ink:#2A1E3D;
+    --clay:#FF5A5F;
+    --moss:#00A896;
+    --line:#F0DCC0;
+    --card:#FFFFFF;
+    --gold:#FFB238;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Space Grotesk', sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{ max-width:760px; margin:0 auto; padding:28px 20px 90px; }
+
+  header.top{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:6px; gap:12px; }
+  header.top h1{
+    font-family:'Fraunces', serif; font-weight:600;
+    font-size:clamp(28px,6vw,40px); margin:0; letter-spacing:-0.01em; line-height:1;
+    color:var(--clay);
+  }
+  .week-of{ font-size:13px; color:#7a7264; white-space:nowrap; }
+  .sub{ color:#6b6455; font-size:15px; margin:0 0 26px; max-width:54ch; line-height:1.5; }
+
+  nav.tabs{ display:flex; gap:4px; margin-bottom:22px; border-bottom:1px solid var(--line); }
+  nav.tabs button{
+    font-family:inherit; font-size:14px; font-weight:500; background:none; border:none;
+    color:#8a8272; padding:10px 4px; margin-right:20px; cursor:pointer; position:relative; top:1px;
+  }
+  nav.tabs button.active{ color:var(--ink); border-bottom:2px solid var(--clay); }
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .plan-grid{ display:flex; flex-direction:column; gap:10px; }
+  .slot{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:16px 16px 16px 18px; display:flex; align-items:center; gap:14px; position:relative;
+    box-shadow: 0 2px 8px rgba(42,30,61,0.06);
+  }
+  .slot-num{ font-family:'Fraunces', serif; font-size:22px; color:var(--gold); width:22px; flex-shrink:0; text-align:center; }
+  .slot-content{flex:1; min-width:0;}
+  .slot-meal{ font-size:15.5px; line-height:1.4; word-break:break-word; }
+  .slot-meal.empty{ color:#a89f8d; font-style:italic; }
+  .slot-tag{ display:inline-flex; gap:6px; font-size:11px; color:var(--moss); margin-top:4px; }
+  .badge{
+    display:inline-block; padding:1px 8px; border-radius:10px; background:#FFEDD6; color:#B8562E; font-size:10.5px; font-weight:500;
+  }
+  .recipe-link{
+    color:var(--moss); font-size:11.5px; text-decoration:none; border-bottom:1px solid currentColor; font-weight:500;
+  }
+  .recipe-link:hover{ opacity:0.8; }
+  .slot-actions{ display:flex; gap:6px; flex-shrink:0; }
+  .icon-btn{
+    background:#FFF6E9; border:1.5px solid var(--line); border-radius:10px; width:34px; height:34px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink);
+    font-size:16px; transition:background 0.15s;
+  }
+  .icon-btn:hover{background:#FFEDD6;}
+  .icon-btn.danger:hover{background:#FFE0E1; border-color:var(--clay);}
+
+  .plan-footer{ margin-top:20px; display:flex; gap:10px; flex-wrap:wrap; }
+  .btn{
+    font-family:inherit; font-size:14px; font-weight:600; padding:11px 18px; border-radius:10px;
+    border:none; background:var(--clay); color:#fff; cursor:pointer;
+    box-shadow: 0 3px 10px rgba(255,90,95,0.3);
+  }
+  .btn:hover{background:#ff4348;}
+  .btn.ghost{ background:none; color:var(--ink); border:1.5px solid var(--line); box-shadow:none; }
+  .btn.ghost:hover{background:var(--card);}
+
+  .empty-state{ text-align:center; padding:50px 20px; color:#8a8272; }
+  .empty-state .big{ font-family:'Fraunces', serif; font-size:20px; color:var(--ink); margin-bottom:8px; }
+
+  .modal-backdrop{
+    display:none; position:fixed; inset:0; background:rgba(43,38,32,0.5); z-index:50;
+    align-items:flex-end; justify-content:center;
+  }
+  .modal-backdrop.active{display:flex;}
+  .modal{
+    background:var(--paper); width:100%; max-width:760px; max-height:85vh;
+    border-radius:14px 14px 0 0; display:flex; flex-direction:column; overflow:hidden;
+  }
+  @media (min-width:640px){
+    .modal-backdrop{align-items:center;}
+    .modal{border-radius:8px; max-height:80vh;}
+  }
+  .modal-head{ padding:18px 20px 12px; border-bottom:1px solid var(--line); flex-shrink:0; }
+  .modal-head h2{ font-family:'Fraunces', serif; font-size:20px; margin:0 0 12px; }
+  .filter-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .filter-chip{
+    font-family:inherit; font-size:13px; font-weight:500; padding:6px 14px; border-radius:20px; border:1.5px solid var(--line);
+    background:var(--card); color:var(--ink); cursor:pointer;
+  }
+  .filter-chip.active{ background:var(--clay); color:#fff; border-color:var(--clay); }
+  .search-box{
+    width:100%; margin-top:10px; padding:9px 12px; border:1px solid var(--line); border-radius:6px;
+    font-family:inherit; font-size:14px; background:var(--card); color:var(--ink);
+  }
+  .search-box:focus{outline:2px solid var(--clay); outline-offset:-1px;}
+
+  .modal-list{ overflow-y:auto; padding:8px 12px 20px; flex:1; }
+  .meal-option{
+    width:100%; text-align:left; background:none; border:none; border-bottom:1px solid var(--line);
+    padding:13px 8px; font-family:inherit; font-size:14.5px; color:var(--ink); cursor:pointer;
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+  }
+  .meal-option:hover{background:var(--card);}
+  .meal-option .src{ display:flex; gap:5px; flex-shrink:0; }
+  .no-results{ text-align:center; color:#9a9282; padding:40px 20px; font-size:14px; }
+
+  .history-week{ background:var(--card); border:1px solid var(--line); border-radius:3px; padding:14px 16px; margin-bottom:10px; }
+  .history-week .hdate{ font-size:12px; color:var(--moss); margin-bottom:6px; font-weight:500; }
+  .history-week ul{ margin:0; padding-left:18px; font-size:14px; line-height:1.7; }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--moss); color:#fff; padding:11px 20px; border-radius:10px; font-size:13.5px; font-weight:500;
+    opacity:0; transition:all 0.25s ease; pointer-events:none; z-index:60; white-space:nowrap;
+    box-shadow: 0 4px 14px rgba(0,168,150,0.35);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .counts{ font-size:12.5px; color:#8a8272; margin:-14px 0 22px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Menú semanal</h1>
+    <span class="week-of" id="weekOf"></span>
+  </header>
+  <p class="sub">Recetas reales (HelloFresh US y NZ). Cuando el link está confirmado, aparece debajo del nombre. Sin pescado, brócoli, hongos ni cerdo — jamón y panceta sí van.</p>
+
+  <nav class="tabs">
+    <button class="active" data-view="plan">Plan de la semana</button>
+    <button data-view="history">Semanas anteriores</button>
+  </nav>
+
+  <section class="view active" id="view-plan">
+    <div class="counts" id="counts"></div>
+    <div class="plan-grid" id="planGrid"></div>
+    <div class="plan-footer">
+      <button class="btn" id="regenBtn">Sugerir semana nueva</button>
+      <button class="btn ghost" id="saveWeekBtn">Guardar esta semana</button>
+      <button class="btn ghost" id="clearWeekBtn">Vaciar</button>
+    </div>
+  </section>
+
+  <section class="view" id="view-history">
+    <div id="historyList"></div>
+  </section>
+</div>
+
+<div class="modal-backdrop" id="pickerBackdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Elegí una receta</h2>
+      <div class="filter-row">
+        <button class="filter-chip active" data-filter="all">Todas</button>
+        <button class="filter-chip" data-filter="carne">Carne</button>
+        <button class="filter-chip" data-filter="pollo">Pollo</button>
+        <button class="filter-chip" data-filter="vegetariano">Vegetariano</button>
+        <button class="filter-chip" data-filter="random">Sorprendeme</button>
+      </div>
+      <input type="text" class="search-box" id="searchBox" placeholder="Buscar (ej: tarta, pollo, milanesa)…">
+    </div>
+    <div class="modal-list" id="modalList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>const RECIPES = [{"name": "Beef Tenderloin au Poivre with Potato Wedges & Green Beans", "type": "carne", "minutes": 40, "kcal": 600, "source": "HelloFresh US", "url": "https://www.hellofresh.com/recipes/beef-tenderloin-au-poivre-5cf80ac6cf2d63000a314741"}, {"name": "Sun-Dried Tomato Spaghetti with Grape Tomatoes, Almonds & Parmesan", "type": "vegetariano", "minutes": 20, "kcal": 630, "source": "HelloFresh US", "url": "https://www.hellofresh.com/recipes/sun-dried-tomato-spaghetti-6231ef8d59a1d65a30536f97"}, {"name": "Chicken Sausage Spaghetti Bolognese with Zucchini & Parmesan", "type": "pollo", "minutes": 35, "kcal": 850, "source": "HelloFresh US", "url": "https://www.hellofresh.com/recipes/chicken-sausage-spaghetti-bolognese-61dddda050f10576b91d9a3b"}, {"name": "Chicken Sausage Cavatappi Bolognese with Zucchini & Parmesan", "type": "pollo", "minutes": 30, "kcal": 820, "source": "HelloFresh US", "url": "https://www.hellofresh.com/recipes/chicken-sausage-cavatappi-bolognese-61f98622422b687c017a9408"}, {"name": "One-Pan BBQ Pulled Chicken Tacos with Cholula Slaw", "type": "pollo", "minutes": 15, "kcal": 720, "source": "HelloFresh US", "url": "https://www.hellofresh.com/recipes/one-pan-bbq-pulled-chicken-tacos-61c1e74141c0ec61275f5478"}, {"name": "Middle Eastern Chickpea Bowls with Pistachio Rice & Garlicky White Sauce", "type": "vegetariano", "minutes": 40, "kcal": 750, "source": "HelloFresh US", "url": "https://www.hellofresh.com/recipes/middle-eastern-chickpea-bowls-5eb082c2ff8d2876ce4bf9a2"}, {"name": "Sirloin Steak Provençal with Roasted Potatoes, Carrots & Truffle Cream", "type": "carne", "minutes": 45, "kcal": 710, "source": "HelloFresh US", "url": "https://www.hellofresh.com/recipes/sirloin-steak-provencal-5ee8f865b36bfe7f5b0592c5"}, {"name": "Creamy Pesto and Bell Pepper Chicken Sausage Flatbread", "type": "pollo", "minutes": 30, "kcal": 870, "source": "HelloFresh US", "url": "https://www.hellofresh.com/recipes/creamy-pesto-and-bell-pepper-chicken-sausage-flatbread-68d654939ed4d6794189eddc"}, {"name": "One-Pan Baja Chicken Quesadillas with Salsa Fresca & Lime Crema", "type": "pollo", "minutes": 30, "kcal": null, "source": "HelloFresh US", "url": "https://www.hellofresh.com/recipes/one-pan-baja-chicken-quesadillas-648888970b7af205da01b370"}, {"name": "Sheet Pan Dijon Onion Crunch Chicken with Green Beans & Garlic Bread", "type": "pollo", "minutes": 30, "kcal": 720, "source": "HelloFresh US", "url": "https://www.hellofresh.com/recipes/sheet-pan-dijon-onion-crunch-chicken-621e7f79fda2615c364c54b2"}, {"name": "Za'atar-Roasted Zucchini, Bell Pepper & Feta Sandos with Harissa Aioli", "type": "vegetariano", "minutes": 30, "kcal": null, "source": "HelloFresh US", "url": "https://www.hellofresh.com/recipes/zaatar-roasted-zucchini-pepper-sandos-622615ff37063748971a9f97"}, {"name": "Zucchini & Sun-Dried Tomato Risotto with Grape Tomatoes & Parmesan", "type": "vegetariano", "minutes": 40, "kcal": 690, "source": "HelloFresh US", "url": "https://www.hellofresh.com/recipes/vegetarian-recipes"}, {"name": "Middle Eastern Chicken & Chickpea Bowls with Pistachio Rice", "type": "pollo", "minutes": 40, "kcal": null, "source": "HelloFresh US", "url": "https://www.hellofresh.com/recipes/middle-eastern-chicken-chickpea-bowls-64aecfbcbf53a3eb58aab5e0"}, {"name": "Mini Beef Meatloaves & Mash with Steamed Veggies & Bacon Gravy", "type": "carne", "minutes": 40, "kcal": 910, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/meat-recipes/beef"}, {"name": "American Beef Mince Chilli Nachos with Corn Chips & Tomato Salsa", "type": "carne", "minutes": 25, "kcal": 497, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/meat-recipes/beef"}, {"name": "Smokey Beef & Charred Pineapple Burger with Potato Fries, Burger Sauce & Fried Egg", "type": "carne", "minutes": 30, "kcal": 1094, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/meat-recipes/beef"}, {"name": "Cheeseburger Beef Meatball Tacos with Extra Cheddar, Cos Salad & Burger Sauce", "type": "carne", "minutes": 30, "kcal": 978, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/meat-recipes/beef"}, {"name": "Double Caramelised Beef & Onion Subs with Fries, Avocado & Herby Mayo", "type": "carne", "minutes": 30, "kcal": 1195, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/meat-recipes/beef"}, {"name": "Honey BBQ Chicken with Coconut Rice, Crisp Slaw & Aioli", "type": "pollo", "minutes": 40, "kcal": 661, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/meat-recipes/chicken"}, {"name": "Double Kiwi Chicken & Courgette Risoni with Rocket Salad", "type": "pollo", "minutes": 15, "kcal": 909, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/meat-recipes/chicken"}, {"name": "Chicken, Glazed Halloumi & Orange-Radish Salad with Avocado & Balsamic Dressing", "type": "pollo", "minutes": 25, "kcal": 826, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/meat-recipes/chicken"}, {"name": "Easy Italian Chicken Parmigiana with Carrot Ribbon & Apple Salad", "type": "pollo", "minutes": 25, "kcal": 775, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/meat-recipes/chicken"}, {"name": "Saucy Mexican Bean Enchiladas with Charred Corn Salsa & Sour Cream", "type": "vegetariano", "minutes": 35, "kcal": 777, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/vegetarian-recipes"}, {"name": "Sticky Falafels, Halloumi & Chermoula Veggies with Almond Salad", "type": "vegetariano", "minutes": 30, "kcal": 930, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/vegetarian-recipes"}, {"name": "Rustic Halloumi & Caramelised Onion Burger with Spiced Wedges", "type": "vegetariano", "minutes": 35, "kcal": 927, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/vegetarian-recipes"}, {"name": "Basil Pesto & Roast Pumpkin Risoni with Chilli Pangrattato & Feta", "type": "vegetariano", "minutes": 30, "kcal": 1107, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/vegetarian-recipes"}, {"name": "Homestyle Pumpkin & Leek Risotto with Basil Pesto & Double Parmesan", "type": "vegetariano", "minutes": 40, "kcal": 847, "source": "HelloFresh NZ", "url": "https://www.hellofresh.co.nz/recipes/vegetarian-recipes"}, {"name": "Brown Sugar Bourbon Chicken with Apple Pan Sauce & Garlic Mashed Potatoes", "type": "pollo", "source": "HelloFresh US"}, {"name": "Brown Sugar Bourbon Chicken Sandwiches with Bacon Jam & Potato Wedges", "type": "pollo", "source": "HelloFresh US"}, {"name": "Smoky Brown Sugar Chicken & Kale Salad with Apple & Sunflower Seeds", "type": "pollo", "source": "HelloFresh US"}, {"name": "Crispy Southwestern Chicken Cutlets with Monterey Jack & Mashed Potatoes", "type": "pollo", "source": "HelloFresh US"}, {"name": "Chicken Sausage & Sweet Potato Soup, All in One Pot", "type": "pollo", "source": "HelloFresh US"}, {"name": "One-Pan Orzo Italiano with Chicken Sausage, Tomatoes & Spinach", "type": "pollo", "source": "HelloFresh US"}, {"name": "Creamy Chicken Sausage & Kale Cavatappi with Garlic, Lemon & Parmesan", "type": "pollo", "source": "HelloFresh US"}, {"name": "Saucy Chicken Burrito Bowls with Charred Poblano, Smoky Crema & Cilantro Lime Rice", "type": "pollo", "source": "HelloFresh US"}, {"name": "Bayou Blackened Chicken Legs with Smoky Red Beans, Buttery Rice & Hot Sauce Crema", "type": "pollo", "source": "HelloFresh US"}, {"name": "Crispy Chicken Legs with Scallion Chimichurri & Black Beans over Lime Rice", "type": "pollo", "source": "HelloFresh US"}, {"name": "Sweet 'n' Smoky Chicken Cutlets with Cherry Ancho BBQ Sauce & Pineapple Rice", "type": "pollo", "source": "HelloFresh US"}, {"name": "Chicken Sausage & Sun-Dried Tomato Risotto with Grape Tomatoes & Parmesan", "type": "pollo", "source": "HelloFresh US"}, {"name": "Eastern Carolina Pulled Chicken Sliders on Brioche with Tangy Cabbage Slaw", "type": "pollo", "source": "HelloFresh US"}, {"name": "Maple Mustard Chicken Legs with Spiced Sweet Potato Mash & Nutty Green Beans", "type": "pollo", "source": "HelloFresh US"}, {"name": "Simple Chimi Chimi Chicken with Herb Sauce", "type": "pollo", "source": "HelloFresh US"}, {"name": "Low-Lift BBQ Pulled Chicken & Gouda Sandwiches", "type": "pollo", "source": "HelloFresh US"}, {"name": "Cajun Fried Chicken Thighs with Gravy, Brown Butter Mash & Cornbread", "type": "pollo", "source": "HelloFresh US"}, {"name": "Crispy Parmesan Chicken with Green Beans & Garlic Herb Couscous", "type": "pollo", "source": "HelloFresh US"}, {"name": "One-Pan Beef Enchiladas Verdes with Mexican Cheese Blend & Hot Sauce Crema", "type": "carne", "source": "HelloFresh US"}, {"name": "Fully Loaded Beef Taquitos with Pico de Gallo, Guacamole & Hot Sauce", "type": "carne", "source": "HelloFresh US"}, {"name": "Beef with Cheddar-Gouda Fondue, Asparagus, Fingerling Potatoes & Apple", "type": "carne", "source": "HelloFresh US"}, {"name": "Steak Sandwiches with Horseradish Mayo, Fried Onions & Sweet Potato Wedges", "type": "carne", "source": "HelloFresh US"}, {"name": "Garlicky Steak Bowls with Tomato-Cuke Salad, Couscous & Dill Crema", "type": "carne", "source": "HelloFresh US"}, {"name": "Tex-Mex Beef Lettuce Wraps with Pickled Shallot & Tortilla Chips", "type": "carne", "source": "HelloFresh US"}, {"name": "Tex-Mex Taco Burgers with Guacamole & Tortilla Chips", "type": "carne", "source": "HelloFresh US"}, {"name": "Sirloin Steak & Chimichurri Tomatoes with Roasted Potatoes & Green Beans", "type": "carne", "source": "HelloFresh US"}, {"name": "Sirloin Steak & Cheddar Fondue Board with Bacon, Brie & Roasted Veggies", "type": "carne", "source": "HelloFresh US"}, {"name": "Ranch Steak & Sherry Shallot Sauce with Garlic Parmesan Potato Clusters", "type": "carne", "source": "HelloFresh US"}, {"name": "Southwest Beef Cavatappi Skillet with Poblano & Smoky Red Pepper Crema", "type": "carne", "source": "HelloFresh US"}, {"name": "Beef Flautas Supreme with Pico de Gallo & Lime Crema", "type": "carne", "source": "HelloFresh US"}, {"name": "Moo Shu Beef Bowls with Hoisin, Chili Sauce & Sesame Seeds", "type": "carne", "source": "HelloFresh US"}, {"name": "San Antonio Beef Bowls with Monterey Jack, Salsa & Crema", "type": "carne", "source": "HelloFresh US"}, {"name": "Cheesy Beef Tostadas with Green Pepper, Tomato Salsa & Hot Sauce Crema", "type": "carne", "source": "HelloFresh US"}, {"name": "Beef Au Poivre & Cheesy Potato Gratin with Pear & Pecan Salad", "type": "carne", "source": "HelloFresh US"}, {"name": "When Steak Met Potatoes with Creamed Kale & Peppercorn Sauce", "type": "carne", "source": "HelloFresh US"}, {"name": "Peppercorn-Crusted Beef Tenderloin with Chive Butter & Mashed Sweet Potatoes", "type": "carne", "source": "HelloFresh US"}, {"name": "Beef Tenderloin with Truffle Mash, Ricotta Crostini & Vanilla Cheesecake", "type": "carne", "source": "HelloFresh US"}, {"name": "Steakhouse-Style Beef Tenderloin Sandos with Gouda & Truffle Mayo", "type": "carne", "source": "HelloFresh US"}, {"name": "Beef Tenderloin & Gouda Sandos with Balsamic Au Jus & Mixed Greens", "type": "carne", "source": "HelloFresh US"}, {"name": "Za'atar-Crusted Beef Tenderloin with Roasted Veggies & Pistachio Couscous", "type": "carne", "source": "HelloFresh US"}, {"name": "Fancy French Onion Beef Tenderloin with Rosemary Fingerlings & Horseradish Cream", "type": "carne", "source": "HelloFresh US"}, {"name": "Beef Tenderloin with Root Vegetables & Parmesan Mashed Potatoes", "type": "carne", "source": "HelloFresh US"}, {"name": "Beef Tenderloin with Demi-Glace Sauce, Garlic Mash & Lemony Brussels Sprouts", "type": "carne", "source": "HelloFresh US"}, {"name": "Sesame Ginger Crunch Chicken Noodle Stir-Fry with Peanuts & Crispy Onions", "type": "pollo", "source": "HelloFresh US"}, {"name": "Coconut Curry with Chickpea & Bell Pepper over Basmati Rice", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Indian-Style Chickpea Coconut Curry with Basmati Rice", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Roasted Cauliflower and Squash Tacos with Yogurt Crema", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Pasta Primavera with Lemon Parm Sauce, Bell Pepper & Zucchini", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Creamy Chickpea Salad Sandwiches with Lemony Spinach & Potato Wedges", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "One-Pan Bean & Poblano Lettuce Wraps with Radish Tomato Salsa & Guacamole", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Veggie Bibimbap Rice Bowls with Sweet Sesame Sauce & Fried Egg", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Tomato Shakshuka with Feta, Creamy Garlic Sauce & Buttery Pita", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Roasted Garlic & Veggie Flatbreads with White Sauce, Mozzarella & Chives", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Cheesy Spinach, Tomato & Feta Panini with Lemon-Oregano Potato Wedges", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Garden Spinach Ricotta Ravioli with Parmesan", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Vegan Spice Market Chickpea & Rice Bowls with Dates & Pistachios", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Roasted Pepper Cavatappi Milano with Fresh Mozzarella & Basil", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Vegan Turkish-Spiced Chickpea Bowls with Dates, Pistachio Rice & Hummus Sauce", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Creamy Lemon Spinach Ricotta Ravioli with Roasted Bell Pepper & Parmesan", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Shawarma-Spiced Grilling Cheese with Pistachio Rice & Garlicky White Sauce", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Warm Lentil, Carrot & Feta Salad with Arugula, Fig Vinaigrette & Garlic Bread", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Southwest Stuffed Zucchini Boats with Plant-Based Protein & Avocado Crema", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Garlic Herb Tortelloni with Roasted Tomato & Zucchini", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Spinach Caprese Salad with Herbed Chickpeas & Creamy Balsamic Vinaigrette", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Vegan Sweet Potato & Black Bean Tostadas with Bell Pepper & Guacamole", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Cantina-Style Fried Cauliflower Tacos with Guacamole & Smoky Crema", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Spinach & Sun-Dried Tomato Grain Bowls with Cashews & Honey Mustard Dressing", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Gluten-Free Zucchini Pomodoro Bake with Herbed Ricotta & Mozzarella", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Parm-Crusted Zucchini & Halloumi Sandos with Pesto & Tomato", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Vegan Beans 'n' Greens Stuffed Peppers with Cannellini Beans & Kale", "type": "vegetariano", "source": "HelloFresh US"}, {"name": "Kiwi-Spiced Beef Rissoles & Mint Sauce with Roasted Veggies & Almonds", "type": "carne", "source": "HelloFresh NZ"}, {"name": "Loaded Beef Burger & Potato Fries with Charred Pineapple & Fried Egg", "type": "carne", "source": "HelloFresh NZ"}, {"name": "Spiced Beef & Creamy Pesto Slaw Burger with Kumara Fries", "type": "carne", "source": "HelloFresh NZ"}, {"name": "Double Herbed Beef & Roast Veggie Toss with Yoghurt & Capsicum Relish", "type": "carne", "source": "HelloFresh NZ"}, {"name": "Easy Beef Strips & Potato Salad with Garlic Yoghurt, Almonds & Parmesan", "type": "carne", "source": "HelloFresh NZ"}, {"name": "Classic Beef Mince Potato Topped Pie", "type": "carne", "source": "HelloFresh NZ"}, {"name": "Mexican Beef Mince & Bean Chilli", "type": "carne", "source": "HelloFresh NZ"}, {"name": "Sticky Beef Mince Stir-Fry & Garlic Rice with Asian Greens & Almonds", "type": "carne", "source": "HelloFresh NZ"}, {"name": "Chicken, Glazed Halloumi & Orange-Radish Salad with Balsamic Dressing", "type": "pollo", "source": "HelloFresh NZ"}, {"name": "Creamy Chicken & Spinach Pasta with Garlic Pangrattato & Turnip Salad", "type": "pollo", "source": "HelloFresh NZ"}, {"name": "Easy Chicken Korma Curry with Asparagus & Garlic Rice", "type": "pollo", "source": "HelloFresh NZ"}, {"name": "Japanese-Style Chicken & Golden Curry with Rapid Butter Rice", "type": "pollo", "source": "HelloFresh NZ"}, {"name": "Honey-Thyme Halloumi & Roast Pumpkin Toss with Almonds & Pesto Dressing", "type": "vegetariano", "source": "HelloFresh NZ"}, {"name": "Creamy Pesto & Cherry Tomato Fettuccine with Apple Balsamic Salad", "type": "vegetariano", "source": "HelloFresh NZ"}, {"name": "Mediterranean Chickpea & Veggie Stew with Parmesan & Garlic Bread", "type": "vegetariano", "source": "HelloFresh NZ"}, {"name": "Eggplant Pasta alla Norma with Parmesan & Parsley", "type": "vegetariano", "source": "HelloFresh NZ"}, {"name": "Cheesy Fiesta Black Bean Burger", "type": "vegetariano", "source": "HelloFresh NZ"}, {"name": "One-Pan Plant-Based Mince Tacos with Cheddar & Creamy Slaw", "type": "vegetariano", "source": "HelloFresh NZ"}, {"name": "Creamy Leek Fusilli with Basil Pesto & Parmesan Cheese", "type": "vegetariano", "source": "HelloFresh NZ"}, {"name": "Hearty Tex-Mex Veggie Mince Nachos with Cheddar Cheese & Sour Cream", "type": "vegetariano", "source": "HelloFresh NZ"}, {"name": "Easy Roast Vegetable Bianca Pizza with Rocket Salad", "type": "vegetariano", "source": "HelloFresh NZ"}];</script>
+<script>
+(function(){
+  const STORAGE_KEY_CURRENT = 'current-week-plan-v2';
+  const STORAGE_KEY_HISTORY = 'week-history-v2';
+
+  let currentPlan = [null, null, null, null, null];
+  let history = [];
+  let activeSlotIndex = null;
+  let activeFilter = 'all';
+
+  const typeLabel = { carne: 'carne', pollo: 'pollo', vegetariano: 'vegetariano' };
+
+  function metaBadges(r){
+    const parts = [];
+    if(r.minutes) parts.push(`<span class="badge">${r.minutes} min</span>`);
+    if(r.kcal) parts.push(`<span class="badge">${r.kcal} kcal</span>`);
+    parts.push(`<span class="badge">${typeLabel[r.type]}</span>`);
+    return parts.join('');
+  }
+
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(()=> t.classList.remove('show'), 2000);
+  }
+
+  function formatDateRange(){
+    const now = new Date();
+    const day = now.getDay();
+    const monday = new Date(now);
+    const diff = day === 0 ? -6 : 1 - day;
+    monday.setDate(now.getDate() + diff);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const opts = { day: 'numeric', month: 'short' };
+    return monday.toLocaleDateString('es-AR', opts) + ' – ' + sunday.toLocaleDateString('es-AR', opts);
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function renderPlan(){
+    const grid = document.getElementById('planGrid');
+    grid.innerHTML = '';
+    let filled = 0;
+    currentPlan.forEach((meal, i) => {
+      if(meal) filled++;
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      slot.innerHTML = `
+        <div class="slot-num">${i+1}</div>
+        <div class="slot-content">
+          <div class="slot-meal ${meal ? '' : 'empty'}">${meal ? escapeHtml(meal.name) : 'Sin elegir todavía'}</div>
+          ${meal ? `<span class="slot-tag">${metaBadges(meal)}${meal.url ? ` · <a class="recipe-link" href="${meal.url}" target="_blank" rel="noopener">${escapeHtml(meal.source)}</a>` : ''}</span>` : ''}
+        </div>
+        <div class="slot-actions">
+          <button class="icon-btn" title="${meal ? 'Cambiar' : 'Elegir'}" data-action="pick" data-idx="${i}">${meal ? '↻' : '+'}</button>
+          ${meal ? `<button class="icon-btn danger" title="Quitar" data-action="remove" data-idx="${i}">×</button>` : ''}
+        </div>
+      `;
+      grid.appendChild(slot);
+    });
+    document.getElementById('counts').textContent = `${filled} de 5 recetas elegidas`;
+    grid.querySelectorAll('[data-action="pick"]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openPicker(parseInt(btn.dataset.idx)));
+    });
+    grid.querySelectorAll('[data-action="remove"]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        currentPlan[parseInt(btn.dataset.idx)] = null;
+        renderPlan();
+        persistCurrent();
+      });
+    });
+  }
+
+  function openPicker(idx){
+    activeSlotIndex = idx;
+    document.getElementById('searchBox').value = '';
+    setFilter('all');
+    document.getElementById('pickerBackdrop').classList.add('active');
+    document.getElementById('searchBox').focus();
+  }
+
+  function closePicker(){
+    document.getElementById('pickerBackdrop').classList.remove('active');
+    activeSlotIndex = null;
+  }
+
+  function usedNames(){
+    return currentPlan.filter(Boolean).map(m => m.name);
+  }
+
+  function setFilter(f){
+    activeFilter = f;
+    document.querySelectorAll('.filter-chip').forEach(c=>{
+      c.classList.toggle('active', c.dataset.filter === f);
+    });
+    if(f === 'random'){
+      pickRandom();
+      return;
+    }
+    renderModalList();
+  }
+
+  function pickRandom(){
+    const used = usedNames();
+    const pool = RECIPES.filter(r => !used.includes(r.name));
+    const choice = pool[Math.floor(Math.random() * pool.length)];
+    if(choice && activeSlotIndex !== null){
+      currentPlan[activeSlotIndex] = choice;
+      renderPlan();
+      persistCurrent();
+      closePicker();
+      toast('Sumamos: ' + choice.name);
+    }
+  }
+
+  function renderModalList(){
+    const list = document.getElementById('modalList');
+    const q = document.getElementById('searchBox').value.trim().toLowerCase();
+    let pool = RECIPES;
+    if(activeFilter !== 'all') pool = pool.filter(r => r.type === activeFilter);
+    if(q) pool = pool.filter(r => r.name.toLowerCase().includes(q));
+    list.innerHTML = '';
+    if(pool.length === 0){
+      list.innerHTML = '<div class="no-results">No encontré nada con esa búsqueda.</div>';
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    pool.forEach(r=>{
+      const opt = document.createElement('button');
+      opt.className = 'meal-option';
+      opt.innerHTML = `<span>${escapeHtml(r.name)}</span><span class="src">${metaBadges(r)}</span>`;
+      opt.addEventListener('click', ()=>{
+        currentPlan[activeSlotIndex] = r;
+        renderPlan();
+        persistCurrent();
+        closePicker();
+      });
+      frag.appendChild(opt);
+    });
+    list.appendChild(frag);
+  }
+
+  function generateWeek(){
+    // aim for a balanced mix: try to include at least 1 vegetarian, rest weighted carne/pollo
+    const shuffled = [...RECIPES].sort(() => Math.random() - 0.5);
+    const veg = shuffled.filter(r => r.type === 'vegetariano');
+    const rest = shuffled.filter(r => r.type !== 'vegetariano');
+    const picks = [];
+    if(veg.length) picks.push(veg[0]);
+    for(const r of rest){
+      if(picks.length >= 5) break;
+      if(!picks.some(p => p.name === r.name)) picks.push(r);
+    }
+    while(picks.length < 5 && shuffled.length){
+      const candidate = shuffled[Math.floor(Math.random()*shuffled.length)];
+      if(!picks.some(p => p.name === candidate.name)) picks.push(candidate);
+    }
+    currentPlan = picks.slice(0,5).sort(() => Math.random() - 0.5);
+    renderPlan();
+    persistCurrent();
+    toast('Nueva semana sugerida');
+  }
+
+  function renderHistory(){
+    const container = document.getElementById('historyList');
+    if(history.length === 0){
+      container.innerHTML = `<div class="empty-state"><div class="big">Todavía no guardaste ninguna semana</div>Cuando termines de armar el plan, tocá "Guardar esta semana".</div>`;
+      return;
+    }
+    container.innerHTML = '';
+    history.slice().reverse().forEach(week=>{
+      const div = document.createElement('div');
+      div.className = 'history-week';
+      div.innerHTML = `
+        <div class="hdate">${week.label}</div>
+        <ul>${week.meals.map(m => `<li>${escapeHtml(m.name)}</li>`).join('')}</ul>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  async function persistCurrent(){
+    try{ await window.storage.set(STORAGE_KEY_CURRENT, JSON.stringify(currentPlan), false); }
+    catch(e){ console.error('storage error', e); }
+  }
+  async function persistHistory(){
+    try{ await window.storage.set(STORAGE_KEY_HISTORY, JSON.stringify(history), false); }
+    catch(e){ console.error('storage error', e); }
+  }
+  async function loadState(){
+    try{
+      const cur = await window.storage.get(STORAGE_KEY_CURRENT, false);
+      if(cur && cur.value) currentPlan = JSON.parse(cur.value);
+    }catch(e){}
+    try{
+      const hist = await window.storage.get(STORAGE_KEY_HISTORY, false);
+      if(hist && hist.value) history = JSON.parse(hist.value);
+    }catch(e){}
+    if(!currentPlan.some(Boolean)){
+      generateWeek();
+    } else {
+      renderPlan();
+    }
+    renderHistory();
+  }
+
+  document.getElementById('regenBtn').addEventListener('click', generateWeek);
+
+  document.getElementById('saveWeekBtn').addEventListener('click', ()=>{
+    const filled = currentPlan.filter(Boolean);
+    if(filled.length === 0){
+      toast('Elegí al menos una receta primero');
+      return;
+    }
+    history.push({ label: formatDateRange(), meals: filled, savedAt: Date.now() });
+    persistHistory();
+    currentPlan = [null, null, null, null, null];
+    persistCurrent();
+    renderPlan();
+    renderHistory();
+    toast('Semana guardada');
+  });
+
+  document.getElementById('clearWeekBtn').addEventListener('click', ()=>{
+    currentPlan = [null, null, null, null, null];
+    renderPlan();
+    persistCurrent();
+  });
+
+  document.querySelectorAll('.filter-chip').forEach(chip=>{
+    chip.addEventListener('click', ()=> setFilter(chip.dataset.filter));
+  });
+  document.getElementById('searchBox').addEventListener('input', renderModalList);
+  document.getElementById('pickerBackdrop').addEventListener('click', (e)=>{
+    if(e.target.id === 'pickerBackdrop') closePicker();
+  });
+  document.querySelectorAll('nav.tabs button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    });
+  });
+
+  document.getElementById('weekOf').textContent = formatDateRange();
+
+  loadState();
+})();
+</script>
+</body>
+</html>
